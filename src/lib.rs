@@ -2,10 +2,11 @@ pub mod source;
 
 pub use source::AssetSource;
 use std::env::var_os;
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter};
 use std::path::PathBuf;
 use steamlocate::SteamDir;
 use thiserror::Error;
+use tracing::warn;
 
 #[derive(Debug, Error)]
 pub enum LoaderError {
@@ -24,6 +25,14 @@ pub struct Loader {
     sources: Vec<Box<dyn AssetSource>>,
 }
 
+impl Debug for Loader {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Loader")
+            .field("sources", &self.sources.len())
+            .finish_non_exhaustive()
+    }
+}
+
 impl Loader {
     /// Create the loader
     pub fn new() -> Result<Self, LoaderError> {
@@ -33,7 +42,7 @@ impl Loader {
         let hl_dir = tf2_dir.join("hl2");
         let download = tf_dir.join("download");
 
-        #[cfg(feature = "bsp")]
+        #[cfg(feature = "vpk")]
         let vpks = tf_dir
             .read_dir()?
             .chain(hl_dir.read_dir()?)
@@ -41,7 +50,12 @@ impl Loader {
             .filter_map(|item| Some(item.path().to_str()?.to_string()))
             .filter(|path| path.ends_with("dir.vpk"))
             .map(|path| vpk::from_path(&path))
-            .filter_map(|res| res.ok())
+            .filter_map(|res| {
+                if let Err(e) = &res {
+                    warn!(error = ?e, "error while loading vpk");
+                }
+                res.ok()
+            })
             .map(|vpk| Box::new(vpk) as Box<dyn AssetSource>);
 
         #[allow(unused_mut)]
@@ -51,7 +65,7 @@ impl Loader {
             Box::new(hl_dir),
         ];
 
-        #[cfg(feature = "bsp")]
+        #[cfg(feature = "vpk")]
         sources.extend(vpks);
 
         Ok(Loader { sources })
