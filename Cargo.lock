@@ -800,7 +800,7 @@ dependencies = [
 
 [[package]]
 name = "tf-asset-loader"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "steamlocate",
  "thiserror",
@@ -927,9 +927,9 @@ checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
 name = "vbsp"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56ec4dcb4a2fe77817a40e3d137abbe6bbff8c6d387b397b36bd6decaf3cd7be"
+checksum = "2fbafc832b8ea1ccbc41869f2103498c3a1f94e4330b1e775d12fd59f007141d"
 dependencies = [
  "ahash",
  "arrayvec",
