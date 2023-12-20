@@ -2,6 +2,9 @@
 name = "tf-asset-loader"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "Utility for loading assets from tf2 data files"
+repository = "https://github.com/icewind1991/tf-asset-loader"
 rust-version = "1.67.0"
 
 [dependencies]
