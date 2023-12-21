@@ -1,6 +1,6 @@
 [package]
 name = "tf-asset-loader"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "MIT"
 description = "Utility for loading assets from tf2 data files"
@@ -13,8 +13,8 @@ tracing = "0.1.40"
 vpk = { version = "0.2.0", optional = true }
 vbsp = { version = "0.4.0", optional = true }
 thiserror = "1.0.50"
-zip-lzma = { version = "0.6.3", optional = true }
+zip = { package = "zip-lzma", version = "0.6.3", default-features = false, features = ["lzma"], optional = true }
 
 [features]
-bsp = ["vbsp", "zip-lzma"]
+bsp = ["vbsp", "zip"]
 default = ["vpk"]

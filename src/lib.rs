@@ -14,9 +14,9 @@ pub enum LoaderError {
     Tf2NotFound,
     #[error(transparent)]
     Io(#[from] std::io::Error),
-    #[cfg(feature = "zip-lzma")]
+    #[cfg(feature = "zip")]
     #[error(transparent)]
-    Zip(#[from] zip_lzma::result::ZipError),
+    Zip(#[from] zip::result::ZipError),
     #[error("{0}")]
     Other(String),
 }

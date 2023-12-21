@@ -44,7 +44,7 @@ mod vdf {
     }
 }
 
-#[cfg(feature = "vbsp")]
+#[cfg(feature = "bsp")]
 mod vbsp {
     use super::AssetSource;
     use crate::LoaderError;
@@ -65,6 +65,46 @@ mod vbsp {
                 Err(BspError::Zip(err)) => Err(err.into()),
                 Err(e) => Err(LoaderError::Other(e.to_string())), // the error *should* always be a zip error
             }
+        }
+    }
+}
+
+#[cfg(feature = "zip")]
+mod zip {
+    use super::AssetSource;
+    use crate::LoaderError;
+    use std::io::{Read, Seek};
+    use std::sync::Mutex;
+    use zip::result::ZipError;
+    use zip::ZipArchive;
+
+    impl<Reader: Read + Seek> AssetSource for Mutex<ZipArchive<Reader>> {
+        fn has(&self, path: &str) -> Result<bool, LoaderError> {
+            match self.lock().unwrap().by_name(path) {
+                Ok(_) => Ok(true),
+                Err(ZipError::FileNotFound) => {
+                    return Ok(false);
+                }
+                Err(e) => {
+                    return Err(e.into());
+                }
+            }
+        }
+
+        fn load(&self, path: &str) -> Result<Option<Vec<u8>>, LoaderError> {
+            let mut zip = self.lock().unwrap();
+            let mut entry = match zip.by_name(path) {
+                Ok(entry) => entry,
+                Err(ZipError::FileNotFound) => {
+                    return Ok(None);
+                }
+                Err(e) => {
+                    return Err(e.into());
+                }
+            };
+            let mut buff = vec![0; entry.size() as usize];
+            entry.read_exact(&mut buff)?;
+            Ok(Some(buff))
         }
     }
 }
