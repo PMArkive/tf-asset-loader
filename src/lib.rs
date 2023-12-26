@@ -4,6 +4,7 @@ pub use source::AssetSource;
 use std::env::var_os;
 use std::fmt::{Debug, Formatter};
 use std::path::PathBuf;
+use std::sync::Arc;
 use steamlocate::SteamDir;
 use thiserror::Error;
 use tracing::warn;
@@ -21,8 +22,9 @@ pub enum LoaderError {
     Other(String),
 }
 
+#[derive(Clone)]
 pub struct Loader {
-    sources: Vec<Box<dyn AssetSource>>,
+    sources: Vec<Arc<dyn AssetSource>>,
 }
 
 impl Debug for Loader {
@@ -56,13 +58,13 @@ impl Loader {
                 }
                 res.ok()
             })
-            .map(|vpk| Box::new(vpk) as Box<dyn AssetSource>);
+            .map(|vpk| Arc::new(vpk) as Arc<dyn AssetSource>);
 
         #[allow(unused_mut)]
         let mut sources = vec![
-            Box::new(tf_dir) as Box<dyn AssetSource>,
-            Box::new(download),
-            Box::new(hl_dir),
+            Arc::new(tf_dir) as Arc<dyn AssetSource>,
+            Arc::new(download),
+            Arc::new(hl_dir),
         ];
 
         #[cfg(feature = "vpk")]
@@ -72,7 +74,7 @@ impl Loader {
     }
 
     pub fn add_source<S: AssetSource + 'static>(&mut self, source: S) {
-        self.sources.push(Box::new(source))
+        self.sources.push(Arc::new(source))
     }
 
     #[tracing::instrument(skip(self))]
