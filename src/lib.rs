@@ -24,7 +24,7 @@ pub enum LoaderError {
 
 #[derive(Clone)]
 pub struct Loader {
-    sources: Vec<Arc<dyn AssetSource>>,
+    sources: Vec<Arc<dyn AssetSource + Send + Sync>>,
 }
 
 impl Debug for Loader {
@@ -58,11 +58,11 @@ impl Loader {
                 }
                 res.ok()
             })
-            .map(|vpk| Arc::new(vpk) as Arc<dyn AssetSource>);
+            .map(|vpk| Arc::new(vpk) as Arc<dyn AssetSource + Send + Sync>);
 
         #[allow(unused_mut)]
         let mut sources = vec![
-            Arc::new(tf_dir) as Arc<dyn AssetSource>,
+            Arc::new(tf_dir) as Arc<dyn AssetSource + Send + Sync>,
             Arc::new(download),
             Arc::new(hl_dir),
         ];
@@ -73,7 +73,7 @@ impl Loader {
         Ok(Loader { sources })
     }
 
-    pub fn add_source<S: AssetSource + 'static>(&mut self, source: S) {
+    pub fn add_source<S: AssetSource + Send + Sync + 'static>(&mut self, source: S) {
         self.sources.push(Arc::new(source))
     }
 
