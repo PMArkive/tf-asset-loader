@@ -63,9 +63,12 @@ impl Loader {
         #[allow(unused_mut)]
         let mut sources = vec![
             Arc::new(tf_dir) as Arc<dyn AssetSource + Send + Sync>,
-            Arc::new(download),
             Arc::new(hl_dir),
         ];
+
+        if download.exists() {
+            sources.push(Arc::new(download));
+        }
 
         #[cfg(feature = "vpk")]
         sources.extend(vpks);
