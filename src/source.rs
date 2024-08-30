@@ -48,23 +48,15 @@ mod vdf {
 mod vbsp {
     use super::AssetSource;
     use crate::LoaderError;
-    use vbsp::{BspError, Packfile};
+    use vbsp::Packfile;
 
     impl AssetSource for Packfile {
         fn has(&self, path: &str) -> Result<bool, LoaderError> {
-            match self.has(path) {
-                Ok(found) => Ok(found),
-                Err(BspError::Zip(err)) => Err(err.into()),
-                Err(e) => Err(LoaderError::Other(e.to_string())), // the error *should* always be a zip error
-            }
+            Ok(self.has(path)?)
         }
 
         fn load(&self, path: &str) -> Result<Option<Vec<u8>>, LoaderError> {
-            match self.get(path) {
-                Ok(data) => Ok(data),
-                Err(BspError::Zip(err)) => Err(err.into()),
-                Err(e) => Err(LoaderError::Other(e.to_string())), // the error *should* always be a zip error
-            }
+            Ok(self.get(path)?)
         }
     }
 }
@@ -82,12 +74,8 @@ mod zip {
         fn has(&self, path: &str) -> Result<bool, LoaderError> {
             match self.lock().unwrap().by_name(path) {
                 Ok(_) => Ok(true),
-                Err(ZipError::FileNotFound) => {
-                    return Ok(false);
-                }
-                Err(e) => {
-                    return Err(e.into());
-                }
+                Err(ZipError::FileNotFound) => Ok(false),
+                Err(e) => Err(e.into()),
             }
         }
 

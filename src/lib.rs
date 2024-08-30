@@ -8,6 +8,8 @@ use std::sync::Arc;
 use steamlocate::SteamDir;
 use thiserror::Error;
 use tracing::warn;
+#[cfg(feature = "bsp")]
+use vbsp::BspError;
 
 #[derive(Debug, Error)]
 pub enum LoaderError {
@@ -20,6 +22,17 @@ pub enum LoaderError {
     Zip(#[from] zip::result::ZipError),
     #[error("{0}")]
     Other(String),
+}
+
+#[cfg(feature = "bsp")]
+impl From<BspError> for LoaderError {
+    fn from(value: BspError) -> Self {
+        match value {
+            BspError::Zip(err) => LoaderError::Zip(err),
+            BspError::IO(err) => LoaderError::Io(err),
+            err => LoaderError::Other(err.to_string()),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -120,11 +133,11 @@ fn tf2_path() -> Result<PathBuf, LoaderError> {
             Err(LoaderError::Tf2NotFound)
         }
     } else {
-        Ok(SteamDir::locate()
-            .ok_or(LoaderError::Tf2NotFound)?
-            .app(&440)
-            .ok_or(LoaderError::Tf2NotFound)?
-            .path
-            .clone())
+        let (app, library) = SteamDir::locate()
+            .map_err(|_| LoaderError::Tf2NotFound)?
+            .find_app(440)
+            .map_err(|_| LoaderError::Tf2NotFound)?
+            .ok_or(LoaderError::Tf2NotFound)?;
+        Ok(library.resolve_app_dir(&app))
     }
 }
