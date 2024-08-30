@@ -3,9 +3,12 @@ use std::fs::read;
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
+/// Trait for the various sources that assets can be loaded from
 pub trait AssetSource {
+    /// Check if a path exists in the source
     fn has(&self, path: &str) -> Result<bool, LoaderError>;
 
+    /// Load an asset from the source by path if it exists
     fn load(&self, path: &str) -> Result<Option<Vec<u8>>, LoaderError>;
 }
 

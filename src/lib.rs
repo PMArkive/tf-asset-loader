@@ -1,3 +1,22 @@
+//! Utility for loading assets from tf2 data files.
+//!
+//! Supports loading assets like models and textures from the tf2 data directory. The tf2 data directory should be
+//! automatically detected when installed to steam, or you can use the `TF_DIR` environment variable to overwrite the data
+//! directory.
+//!
+//! Supports loading both plain file data and data embedded in `vpk` files.
+//! ```rust,dont-run
+//! # use tf_asset_loader::{Loader, LoaderError};
+//! #
+//! fn main() -> Result<(), LoaderError> {
+//!     let loader = Loader::new()?;
+//!     if let Some(model) = loader.load("models/props_gameplay/resupply_locker.mdl")? {
+//!         println!("resupply_locker.mdl is {} bytes large", model.len());
+//!     }
+//!     Ok(())
+//! }
+//! ```
+
 pub mod source;
 
 pub use source::AssetSource;
@@ -35,6 +54,7 @@ impl From<BspError> for LoaderError {
     }
 }
 
+/// The tf2 asset loader instance
 #[derive(Clone)]
 pub struct Loader {
     sources: Vec<Arc<dyn AssetSource + Send + Sync>>,
@@ -49,7 +69,7 @@ impl Debug for Loader {
 }
 
 impl Loader {
-    /// Create the loader
+    /// Create the loader, either auto-detecting the tf2 directory or from the `TF_DIR` environment variable.
     pub fn new() -> Result<Self, LoaderError> {
         let tf2_dir = tf2_path()?;
 
@@ -89,10 +109,14 @@ impl Loader {
         Ok(Loader { sources })
     }
 
+    /// Add a new source to the loader.
+    ///
+    /// This is intended to be used to add data from bsp files
     pub fn add_source<S: AssetSource + Send + Sync + 'static>(&mut self, source: S) {
         self.sources.push(Arc::new(source))
     }
 
+    /// Check if a file by path exists.
     #[tracing::instrument(skip(self))]
     pub fn exists(&self, name: &str) -> Result<bool, LoaderError> {
         for source in self.sources.iter() {
@@ -103,6 +127,9 @@ impl Loader {
         Ok(false)
     }
 
+    /// Load a file by path.
+    ///
+    /// Returns the file data as `Vec<u8>` or `None` if the path doesn't exist.
     #[tracing::instrument(skip(self))]
     pub fn load(&self, name: &str) -> Result<Option<Vec<u8>>, LoaderError> {
         for source in self.sources.iter() {
@@ -113,6 +140,7 @@ impl Loader {
         Ok(None)
     }
 
+    /// Look for a file by name in one or more paths
     pub fn find_in_paths(&self, name: &str, paths: &[String]) -> Option<String> {
         for path in paths {
             let full_path = format!("{}{}", path, name);
