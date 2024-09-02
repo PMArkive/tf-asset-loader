@@ -522,6 +522,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "path-dedot"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07ba0ad7e047712414213ff67533e6dd477af0a4e1d14fb52343e53d30ea9397"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "pest"
 version = "2.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -747,8 +756,9 @@ dependencies = [
 
 [[package]]
 name = "tf-asset-loader"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
+ "path-dedot",
  "steamlocate",
  "thiserror",
  "tracing",

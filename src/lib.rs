@@ -5,7 +5,7 @@
 //! directory.
 //!
 //! Supports loading both plain file data and data embedded in `vpk` files.
-//! ```rust,dont-run
+//! ```rust,no_run
 //! # use tf_asset_loader::{Loader, LoaderError};
 //! #
 //! fn main() -> Result<(), LoaderError> {
@@ -19,9 +19,11 @@
 
 pub mod source;
 
+use path_dedot::ParseDot;
 pub use source::AssetSource;
+use std::borrow::Cow;
 use std::env::var_os;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::path::PathBuf;
 use std::sync::Arc;
 use steamlocate::SteamDir;
@@ -119,11 +121,22 @@ impl Loader {
     /// Check if a file by path exists.
     #[tracing::instrument(skip(self))]
     pub fn exists(&self, name: &str) -> Result<bool, LoaderError> {
+        let name = clean_path(name);
         for source in self.sources.iter() {
-            if source.has(name)? {
+            if source.has(&name)? {
                 return Ok(true);
             }
         }
+
+        let lower_name = name.to_ascii_lowercase();
+        if name != lower_name {
+            for source in self.sources.iter() {
+                if source.has(&lower_name)? {
+                    return Ok(true);
+                }
+            }
+        }
+
         Ok(false)
     }
 
@@ -132,24 +145,68 @@ impl Loader {
     /// Returns the file data as `Vec<u8>` or `None` if the path doesn't exist.
     #[tracing::instrument(skip(self))]
     pub fn load(&self, name: &str) -> Result<Option<Vec<u8>>, LoaderError> {
+        let name = clean_path(name);
         for source in self.sources.iter() {
-            if let Some(data) = source.load(name)? {
+            if let Some(data) = source.load(&name)? {
                 return Ok(Some(data));
             }
         }
+
+        let lower_name = name.to_ascii_lowercase();
+        if name != lower_name {
+            for source in self.sources.iter() {
+                if let Some(data) = source.load(&lower_name)? {
+                    return Ok(Some(data));
+                }
+            }
+        }
+
         Ok(None)
     }
 
     /// Look for a file by name in one or more paths
-    pub fn find_in_paths(&self, name: &str, paths: &[String]) -> Option<String> {
+    pub fn find_in_paths<S: Display>(&self, name: &str, paths: &[S]) -> Option<String> {
         for path in paths {
             let full_path = format!("{}{}", path, name);
+            let full_path = clean_path(&full_path);
             if self.exists(&full_path).unwrap_or_default() {
-                return Some(full_path);
+                return Some(full_path.to_string());
             }
         }
+
+        let lower_name = name.to_ascii_lowercase();
+        if name != lower_name {
+            for path in paths {
+                let full_path = format!("{}{}", path, lower_name);
+                let full_path = clean_path(&full_path);
+                if self.exists(&full_path).unwrap_or_default() {
+                    return Some(full_path.to_string());
+                }
+            }
+        }
+
         None
     }
+}
+
+fn clean_path(path: &str) -> Cow<str> {
+    if path.contains("/../") {
+        let path_buf = PathBuf::from(format!("/{path}"));
+        let Ok(absolute_path) = path_buf.parse_dot_from("/") else {
+            return path.into();
+        };
+        let path = absolute_path.to_str().unwrap().trim_start_matches('/');
+        String::from(path).into()
+    } else {
+        path.into()
+    }
+}
+
+#[test]
+fn test_clean_path() {
+    assert_eq!("foo/bar", clean_path("foo/bar"));
+    assert_eq!("foo/bar", clean_path("foo/asd/../bar"));
+    assert_eq!("../bar", clean_path("../bar"));
 }
 
 fn tf2_path() -> Result<PathBuf, LoaderError> {
