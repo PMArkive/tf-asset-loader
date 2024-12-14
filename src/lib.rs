@@ -24,7 +24,7 @@ pub use source::AssetSource;
 use std::borrow::Cow;
 use std::env::var_os;
 use std::fmt::{Debug, Display, Formatter};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use steamlocate::SteamDir;
 use thiserror::Error;
@@ -74,6 +74,12 @@ impl Loader {
     /// Create the loader, either auto-detecting the tf2 directory or from the `TF_DIR` environment variable.
     pub fn new() -> Result<Self, LoaderError> {
         let tf2_dir = tf2_path()?;
+        Self::with_tf2_dir(tf2_dir)
+    }
+
+    /// Create the loader with the specified tf2 directory.
+    pub fn with_tf2_dir<P: AsRef<Path>>(tf2_dir: P) -> Result<Self, LoaderError> {
+        let tf2_dir = tf2_dir.as_ref();
 
         let tf_dir = tf2_dir.join("tf");
         let hl_dir = tf2_dir.join("hl2");
