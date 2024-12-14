@@ -1,6 +1,6 @@
 [package]
 name = "tf-asset-loader"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 license = "MIT"
 description = "Utility for loading assets from tf2 data files"
