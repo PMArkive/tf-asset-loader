@@ -7,4 +7,3 @@ automatically detected when installed to steam, or you can use the `TF_DIR` envi
 directory.
 
 Supports loading both plain file data and data embedded in `vpk` files.
-
