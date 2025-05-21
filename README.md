@@ -1,3 +1,5 @@
+# Moved https://codeberg.org/icewind/tf-asset-loader
+
 # tf-asset-loader
 
 Utility for loading assets from tf2 data files.
